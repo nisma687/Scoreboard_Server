@@ -30,6 +30,7 @@ async function run() {
 
     const userCollection = client.db("cricketScorer").collection("users");
     const bawlerCollection = client.db("cricketScorer").collection("bawlers");
+    const batsmanCollection = client.db("cricketScorer").collection("batsmans");
     app.post('/addUser',(req,res)=>{
         const user=req.body;
         const query={email:user.email,name:user.name};
@@ -67,13 +68,14 @@ async function run() {
         const bawler=req.body;
         const query={_id: new ObjectId(id)};
         const pre=await bawlerCollection.findOne(query);
-        console.log(pre);
+        console.log(pre,"balwer previous data");
+        console.log(bawler,"bawler new data");
         const updateDoc={
           $set:{
             run:bawler.run+pre.run,
-            wicket:bawler.wicket,
-            noball:bawler.noball,
-            wide:bawler.wide,
+            wicket:parseInt(bawler.wicket)+parseInt(pre.wicket),
+            noball:parseInt(bawler.noball)+parseInt(pre.noball),
+            wide:parseInt(bawler.wide)+parseInt(pre.wide),
             over:Number.parseFloat(bawler.over+pre.over).toFixed(1),
             maiden:parseInt(bawler.maiden)+parseInt(pre.maiden)
           }
@@ -87,7 +89,57 @@ async function run() {
         const result=await bawlerCollection.findOne(query);
         res.send(result);
       })
-    
+
+      // batsman
+      app.post('/batsmans',async(req,res)=>{
+        const batsman=req.body;
+        console.log(batsman);
+        const query={name:batsman.name,
+          run:batsman.run,
+          four:batsman.four,
+          six:batsman.six,
+          status:batsman.status
+          };
+        const result=await batsmanCollection.insertOne(query);
+        res.send(result);
+        console.log(result,"successful of adding batsman");
+
+      })
+      app.get('/batsmans',async(req,res)=>{
+        const cursor = batsmanCollection.find();
+        const batsmans = await cursor.toArray();
+        res.send(batsmans);
+      }
+      );
+      app.get("/batsman/:id",async(req,res)=>{
+        const id=req.params.id;
+        const query={_id: new ObjectId(id)};
+        const result=await batsmanCollection.findOne(query);
+        res.send(result);
+      })
+      // update batsman
+      app.patch('/batsman/:id',async(req,res)=>{
+        const id=req.params.id;
+        console.log(id);
+        const batsman=req.body;
+        const query={_id: new ObjectId(id)};
+        const pre=await batsmanCollection.findOne(query);
+
+        console.log(pre,"previous data of batsman");
+        const updateDoc={
+          $set:{
+            run:parseInt(pre.run)+parseInt(batsman.run)+parseInt(pre.four)*4+parseInt(pre.six)*6,
+            four:parseInt(batsman.four)+parseInt(pre.four),
+            six:parseInt(batsman.six)+parseInt(pre.six),
+            status:batsman.status
+          }
+        }
+        const result=await batsmanCollection.updateOne(query,updateDoc);
+        res.send(result);
+      
+      })
+
+
 
 
 
